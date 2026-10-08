@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Question Bank{% endblock %}
+{% block page_title %}Question Bank{% endblock %}
+{% block page_sub %}View, edit and manage all questions{% endblock %}
+
+{% block extra_css %}
+<style>
+.filter-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.q-text-cell{max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:28px;width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.2);}
+.modal-title{font-family:'EB Garamond',serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:20px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state div:first-child{font-size:48px;margin-bottom:12px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <label style="font-size:13px;font-weight:500;">Filter by subject:</label>
+    <select name="subject" class="form-control" style="width:180px;" onchange="this.form.submit()">
+      {% for s in subjects %}
+      <option value="{{ s }}" {% if s==filter_sub %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+    <span style="font-size:13px;color:var(--muted);align-self:center;">{{ questions|length }} questions</span>
+    {% if session.user.role == 'admin' %}
+    <button id="bulk_delete_btn" class="btn btn-sm btn-danger" style="display:none;" onclick="bulkDelete()">
+      <i class="fa-solid fa-trash"></i> Delete Selected (<span id="sel_count">0</span>)
+    </button>
+    {% endif %}
+    <a href="{{ url_for('ai_generate') }}" class="btn btn-gold btn-sm">
+      <i class="fa-solid fa-robot"></i> Add via AI
+    </a>
+  </div>
+</div>
+
+{% if questions %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        {% if session.user.role == 'admin' %}
+        <th style="width:36px;"><input type="checkbox" id="select_all" title="Select all" onchange="toggleAll(this)"></th>
+        {% endif %}
+        <th style="width:40px;">ID</th>
+        <th>Subject</th>
+        <th>Unit</th>
+        <th>Type</th>
+        <th>Bloom's Level</th>
+        <th>Difficulty</th>
+        <th>Marks</th>
+        <th>Question</th>
+        <th style="width:100px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set is_admin = session.user.role == 'admin' %}
+      {% for q in questions %}
+      <tr>
+        {% if is_admin %}
+        <td><input type="checkbox" class="q-check" value="{{ q.id }}" onchange="updateBulkBtn()"></td>
+        {% endif %}
+        <td>{{ q.id }}</td>
+        <td>{{ q.subject }}</td>
+        <td>{{ q.unit }}</td>
+        <td><span class="badge badge-{{ q.question_type|lower }}">{{ q.question_type }}</span></td>
+        <td>
+          {% set bl = q.blooms_level or 'Remember' %}
+          <span class="bloom-tag bloom-{{ bl|lower }}">{{ bl }}</span>
+        </td>
+        <td><span class="badge badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span></td>
+        <td><b>{{ q.marks }}</b></td>
+        <td class="q-text-cell" title="{{ q.question_text }}">{{ q.question_text }}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm btn-outline edit-btn"
+              data-id="{{ q.id }}"
+              data-text="{{ q.question_text | e }}"
+              data-type="{{ q.question_type }}"
+              data-diff="{{ q.difficulty }}"
+              data-marks="{{ q.marks }}"
+              data-a="{{ q.option_a or '' }}"
+              data-b="{{ q.option_b or '' }}"
+              data-c="{{ q.option_c or '' }}"
+              data-d="{{ q.option_d or '' }}"
+              data-ans="{{ q.answer or '' }}">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            {% if is_admin %}
+            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ q.id }}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div>📭</div>
+    <div style="font-size:16px;font-weight:500;color:var(--navy);margin-bottom:8px;">No questions yet</div>
+    <div style="font-size:13px;margin-bottom:20px;">Use AI Generate to populate your question bank automatically.</div>
+    <a href="{{ url_for('ai_generate') }}" class="btn btn-gold"><i class="fa-solid fa-robot"></i> Generate Questions with AI</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit_modal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Question</div>
+    <input type="hidden" id="edit_id"/>
+    <div class="form-group">
+      <label class="form-label">Question Text</label>
+      <textarea id="edit_text" class="form-control" rows="3" style="resize:vertical;"></textarea>
+    </div>
+    <div class="modal-grid">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select id="edit_type" class="form-control">
+          <option>MCQ</option><option>Short</option><option>Long</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Difficulty</label>
+        <select id="edit_diff" class="form-control">
+          <option>Easy</option><option>Medium</option><option>Hard</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Marks</label>
+      <input type="number" id="edit_marks" class="form-control" min="1" max="30"/>
+    </div>
+    <div class="modal-grid">
+      <div class="form-group">
+        <label class="form-label">Option A</label>
+        <input type="text" id="edit_a" class="form-control"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option B</label>
+        <input type="text" id="edit_b" class="form-control"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option C</label>
+        <input type="text" id="edit_c" class="form-control"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Option D</label>
+        <input type="text" id="edit_d" class="form-control"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Answer (A/B/C/D for MCQ)</label>
+      <input type="text" id="edit_ans" class="form-control"/>
+    </div>
+    <div id="edit_msg" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEdit()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAll(cb){
+  document.querySelectorAll('.q-check').forEach(c => c.checked = cb.checked);
+  updateBulkBtn();
+}
+
+function updateBulkBtn(){
+  const checked = document.querySelectorAll('.q-check:checked');
+  const btn = document.getElementById('bulk_delete_btn');
+  const countEl = document.getElementById('sel_count');
+  if(btn){
+    btn.style.display = checked.length > 0 ? '' : 'none';
+    if(countEl) countEl.textContent = checked.length;
+  }
+  const selectAll = document.getElementById('select_all');
+  if(selectAll){
+    const all = document.querySelectorAll('.q-check');
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+    selectAll.checked = checked.length === all.length && all.length > 0;
+  }
+}
+
+async function bulkDelete(){
+  const checked = [...document.querySelectorAll('.q-check:checked')];
+  if(!checked.length) return;
+  if(!confirm(`Delete ${checked.length} selected question(s)? This cannot be undone.`)) return;
+  const ids = checked.map(c => parseInt(c.value));
+  const res = await fetch('/api/delete_questions_bulk', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ids})
+  });
+  const data = await res.json();
+  if(data.success){
+    checked.forEach(c => c.closest('tr').remove());
+    updateBulkBtn();
+    document.getElementById('select_all').checked = false;
+    // update count
+    const remaining = document.querySelectorAll('.q-check').length;
+  } else {
+    alert('Bulk delete failed.');
+  }
+}
+
+function openEdit(id, text, type, diff, marks, a, b, c, d, ans){
+  document.getElementById('edit_id').value = id;
+  document.getElementById('edit_text').value = text;
+  document.getElementById('edit_type').value = type;
+  document.getElementById('edit_diff').value = diff;
+  document.getElementById('edit_marks').value = marks;
+  document.getElementById('edit_a').value = a;
+  document.getElementById('edit_b').value = b;
+  document.getElementById('edit_c').value = c;
+  document.getElementById('edit_d').value = d;
+  document.getElementById('edit_ans').value = ans;
+  document.getElementById('edit_msg').innerHTML = '';
+  document.getElementById('edit_modal').classList.add('open');
+}
+
+function closeEdit(){
+  document.getElementById('edit_modal').classList.remove('open');
+}
+
+async function saveEdit(){
+  const id = document.getElementById('edit_id').value;
+  const payload = {
+    question_text: document.getElementById('edit_text').value,
+    question_type: document.getElementById('edit_type').value,
+    difficulty: document.getElementById('edit_diff').value,
+    marks: parseInt(document.getElementById('edit_marks').value),
+    option_a: document.getElementById('edit_a').value||null,
+    option_b: document.getElementById('edit_b').value||null,
+    option_c: document.getElementById('edit_c').value||null,
+    option_d: document.getElementById('edit_d').value||null,
+    answer: document.getElementById('edit_ans').value||null,
+  };
+  const res = await fetch(`/api/edit_question/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data = await res.json();
+  if(data.success){
+    document.getElementById('edit_msg').innerHTML='<div class="alert alert-success"><i class="fa-solid fa-check"></i> Saved successfully!</div>';
+    setTimeout(()=>{closeEdit();location.reload();},900);
+  } else {
+    document.getElementById('edit_msg').innerHTML='<div class="alert alert-error">Save failed.</div>';
+  }
+}
+
+async function deleteQ(id, btn){
+  if(!confirm('Delete this question?')) return;
+  btn.disabled=true;
+  const res = await fetch(`/api/delete_question/${id}`,{method:'DELETE'});
+  const data = await res.json();
+  if(data.success) btn.closest('tr').remove();
+  else {btn.disabled=false;alert('Delete failed.');}
+}
+
+// Close modal on backdrop click
+document.getElementById('edit_modal').addEventListener('click',function(e){
+  if(e.target===this) closeEdit();
+});
+
+// Button click delegation (avoids inline onclick/Jinja quote issues)
+document.addEventListener('click', function(e){
+  const editBtn = e.target.closest('.edit-btn');
+  if(editBtn){
+    openEdit(
+      editBtn.dataset.id,
+      editBtn.dataset.text,
+      editBtn.dataset.type,
+      editBtn.dataset.diff,
+      parseInt(editBtn.dataset.marks),
+      editBtn.dataset.a,
+      editBtn.dataset.b,
+      editBtn.dataset.c,
+      editBtn.dataset.d,
+      editBtn.dataset.ans
+    );
+    return;
+  }
+  const delBtn = e.target.closest('.delete-btn');
+  if(delBtn) deleteQ(delBtn.dataset.id, delBtn);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block page_title %}Generated Papers History{% endblock %}
+{% block page_sub %}All previously generated question papers{% endblock %}
+
+{% block content %}
+{% if papers %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:50px;">ID</th>
+        <th>Subject</th>
+        <th>Exam Type</th>
+        <th>Total Marks</th>
+        <th>Duration</th>
+        <th>Generated On</th>
+        <th>Filename</th>
+        <th style="width:90px;">Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in papers %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td><b>{{ p.subject }}</b></td>
+        <td>{{ p.exam_type }}</td>
+        <td><span class="badge" style="background:#dbeafe;color:#1e40af;">{{ p.total_marks }} marks</span></td>
+        <td>{{ p.duration }} min</td>
+        <td style="color:var(--muted);font-size:12px;">{{ p.generated_on }}</td>
+        <td style="font-size:12px;color:var(--muted);">{{ p.filename }}</td>
+        <td>
+          <a href="/static/uploads/{{ p.filename }}" target="_blank" class="btn btn-sm btn-gold">
+            <i class="fa-solid fa-download"></i>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <div style="text-align:center;padding:60px 20px;color:var(--muted);">
+    <div style="font-size:48px;margin-bottom:12px;">📂</div>
+    <div style="font-size:16px;font-weight:500;color:var(--navy);margin-bottom:8px;">No papers generated yet</div>
+    <div style="font-size:13px;margin-bottom:20px;">Go to Generate Paper to create your first question paper.</div>
+    <a href="{{ url_for('generate') }}" class="btn btn-gold">
+      <i class="fa-solid fa-file-circle-plus"></i> Generate a Paper
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

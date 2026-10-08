@@ -10,53 +10,47 @@ import pyttsx3
 
 class VoiceAssistant:
     def __init__(self):
-        self.engine = None
         self.enabled = True
         self.speech_queue = queue.Queue()
-        self.listening = False
-        self._lock = threading.Lock()
-        self._on_command_heard = None   # FIX 1: callback to update visual status bar
-        self._init_engine()
+        self._on_command_heard = None
+        self._speaking_lock = threading.Lock()
         self._start_worker()
+        print("[Voice] VoiceAssistant ready.")
 
     def set_command_callback(self, callback):
         """Register a callback to show heard text in the UI (visual feedback)."""
         self._on_command_heard = callback
 
-    def _init_engine(self):
-        """FIX 3: Silently reinit TTS engine on crash."""
+    def _speak_now(self, text):
+        """Speak a single phrase in a fresh pyttsx3 engine instance.
+        pyttsx3 is NOT thread-safe with a shared engine — creating a new
+        instance per utterance is the standard fix for background-thread use."""
         try:
-            self.engine = pyttsx3.init()
-            self.engine.setProperty('rate', 155)
-            self.engine.setProperty('volume', 0.9)
-            voices = self.engine.getProperty('voices')
+            engine = pyttsx3.init()
+            engine.setProperty('rate', 155)
+            engine.setProperty('volume', 0.9)
+            voices = engine.getProperty('voices')
             for voice in voices:
                 if 'female' in voice.name.lower() or 'zira' in voice.name.lower():
-                    self.engine.setProperty('voice', voice.id)
+                    engine.setProperty('voice', voice.id)
                     break
-            print("[Voice] TTS engine initialized.")
+            engine.say(text)
+            engine.runAndWait()
+            engine.stop()
         except Exception as e:
-            print(f"[Voice] TTS init error: {e}")
-            self.engine = None
+            print(f"[Voice] Speak error: {e}")
 
     def _start_worker(self):
-        """FIX 4: Smoother speech queue — don't abruptly drop items, let current finish."""
+        """Background thread that processes the speech queue one item at a time."""
         def worker():
             while True:
                 try:
                     text = self.speech_queue.get(timeout=0.5)
                     if text is None:
                         break
-                    if self.enabled and self.engine:
-                        try:
-                            with self._lock:
-                                self.engine.say(text)
-                                self.engine.runAndWait()
-                        except Exception as e:
-                            print(f"[Voice] Speak error: {e}")
-                            # FIX 3: Auto reinit on any TTS crash
-                            time.sleep(0.5)
-                            self._init_engine()
+                    if self.enabled:
+                        with self._speaking_lock:
+                            self._speak_now(text)
                     self.speech_queue.task_done()
                 except queue.Empty:
                     continue
@@ -67,17 +61,22 @@ class VoiceAssistant:
         t.start()
 
     def speak(self, text):
-        """FIX 4: Smoother queue — only drop queued items if queue is getting backed up (>2 items)."""
-        if not self.enabled or not self.engine:
+        """Queue text for speaking."""
+        if not self.enabled:
             return
-        # Only clear backlog if more than 2 items are queued (avoids cutting off important messages)
-        if self.speech_queue.qsize() > 2:
-            while not self.speech_queue.empty():
-                try:
-                    self.speech_queue.get_nowait()
-                    self.speech_queue.task_done()
-                except:
-                    pass
+        self.speech_queue.put(text)
+
+    def speak_interrupt(self, text):
+        """Clear any pending queued speech and say this instead."""
+        if not self.enabled:
+            return
+        # Drain pending items (not the one currently being spoken)
+        while True:
+            try:
+                self.speech_queue.get_nowait()
+                self.speech_queue.task_done()
+            except queue.Empty:
+                break
         self.speech_queue.put(text)
 
     def toggle(self):
@@ -85,13 +84,13 @@ class VoiceAssistant:
         return self.enabled
 
     def stop(self):
-        """Stop current speech immediately."""
-        try:
-            with self._lock:
-                if self.engine:
-                    self.engine.stop()
-        except:
-            pass
+        """Drain the queue so no further items are spoken."""
+        while True:
+            try:
+                self.speech_queue.get_nowait()
+                self.speech_queue.task_done()
+            except queue.Empty:
+                break
 
 
 class VoiceCommandListener:
@@ -113,8 +112,8 @@ class VoiceCommandListener:
         try:
             import speech_recognition as sr
             recognizer = sr.Recognizer()
-            recognizer.energy_threshold = 300          # Better sensitivity
-            recognizer.dynamic_energy_threshold = True  # Auto-adjust for noise
+            recognizer.energy_threshold = 300
+            recognizer.dynamic_energy_threshold = True
             mic = sr.Microphone()
 
             with mic as source:
@@ -128,7 +127,6 @@ class VoiceCommandListener:
                     text = recognizer.recognize_google(audio).lower()
                     print(f"[Voice] Heard: {text}")
 
-                    # FIX 1: Update visual status bar with what was heard
                     if self.assistant._on_command_heard:
                         self.assistant._on_command_heard(f'🎙 Heard: "{text}"')
 
@@ -137,7 +135,6 @@ class VoiceCommandListener:
                 except sr.WaitTimeoutError:
                     pass
                 except sr.UnknownValueError:
-                    # FIX 1: Show in status bar when speech wasn't understood
                     if self.assistant._on_command_heard:
                         self.assistant._on_command_heard("🎙 Listening... (couldn't understand)")
                 except Exception as e:
@@ -149,7 +146,6 @@ class VoiceCommandListener:
             print("[Voice] SpeechRecognition not installed. Run: pip install SpeechRecognition pyaudio")
 
     def _process_command(self, text):
-        """FIX 2: Extended command map with preview, clear, and better aliases."""
         commands = {
             # Navigation
             "generate paper":       "nav_generate",
@@ -168,11 +164,11 @@ class VoiceCommandListener:
             "generate":             "action_generate",
             "create paper":         "action_generate",
             "make paper":           "action_generate",
-            "show preview":         "action_preview",   # FIX 2: new
-            "preview":              "action_preview",   # FIX 2: new
+            "show preview":         "action_preview",
+            "preview":              "action_preview",
             "save":                 "action_save",
-            "clear":                "action_clear",     # FIX 2: new
-            "reset":                "action_clear",     # FIX 2: new
+            "clear":                "action_clear",
+            "reset":                "action_clear",
             "logout":               "action_logout",
             "log out":              "action_logout",
             "sign out":             "action_logout",
@@ -185,7 +181,7 @@ class VoiceCommandListener:
             "unmute voice":         "voice_unmute",
             "enable voice":         "voice_unmute",
             # Help
-            "help":                 "action_help",      # FIX 2: new
+            "help":                 "action_help",
             "what can you do":      "action_help",
             "commands":             "action_help",
         }
@@ -195,8 +191,7 @@ class VoiceCommandListener:
                 self.callback(action)
                 return
 
-        # Not understood — speak feedback
-        self.assistant.speak("Sorry, I didn't catch that. Say 'help' for a list of commands.")
+        self.assistant.speak("Sorry, I didn't catch that. Say help for a list of commands.")
 
 
 # ── Global assistant instance ─────────────────────────────────

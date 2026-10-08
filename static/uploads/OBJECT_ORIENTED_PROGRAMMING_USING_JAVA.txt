@@ -1,0 +1,76 @@
+OBJECT ORIENTED PROGRAMMING USING JAVA
+Course Code: 24CS32
+Subject: Java Programming - Common to CSE, AIML and CDS
+
+MODULE-1: INTRODUCTION TO JAVA AND BASICS (8 hours)
+- Overview of Java
+- Features of Java (Platform Independent, Secure, Robust, etc.)
+- Java Virtual Machine (JVM), JRE, JDK
+- Structure of Java Program
+- Data Types, Variables and Operators
+- Control Statements: if, switch, loops
+
+Key Topics:
+- Understand JVM architecture
+- Write simple Java programs
+- Use conditional and looping statements effectively
+
+MODULE-2: OBJECT ORIENTED PROGRAMMING CONCEPTS (8 hours)
+- Classes and Objects
+- Constructors
+- Method Overloading
+- Inheritance (Single, Multilevel, Hierarchical)
+- Method Overriding
+- Polymorphism
+- Encapsulation and Abstraction
+
+Key Topics:
+- Create and use classes and objects
+- Implement inheritance and polymorphism
+- Apply encapsulation in real-world programs
+
+MODULE-3: PACKAGES, INTERFACES AND EXCEPTION HANDLING (8 hours)
+- Packages: Creating and using packages
+- Interfaces: Definition and implementation
+- Multiple inheritance using interfaces
+- Exception Handling: try, catch, throw, throws, finally
+- User-defined exceptions
+
+Key Topics:
+- Organize code using packages
+- Implement interfaces
+- Handle runtime errors using exceptions
+
+MODULE-4: MULTITHREADING AND FILE HANDLING (8 hours)
+- Multithreading: Thread class and Runnable interface
+- Thread lifecycle
+- Synchronization
+- File Handling: Streams, FileReader, FileWriter
+- Buffered streams
+
+Key Topics:
+- Create multithreaded applications
+- Handle file input and output
+- Implement synchronization
+
+MODULE-5: COLLECTIONS AND GUI PROGRAMMING (8 hours) 
+- Collection Framework: List, Set, Map
+- ArrayList, HashSet, HashMap
+- Iterators
+- Basics of GUI: AWT and Swing
+- Event Handling
+
+Key Topics:
+- Use collection classes efficiently
+- Build simple GUI applications
+- Handle events in GUI programs
+
+Bloom's Taxonomy Mapping:
+L1 - Remember: Recall Java syntax and concepts  
+L2 - Understand: Explain OOP principles and program flow  
+L3 - Apply: Write Java programs using concepts  
+L4 - Analyze: Debug and analyze code  
+L5 - Evaluate: Compare approaches and optimize solutions  
+L6 - Create: Develop complete Java applications  
+
+ 

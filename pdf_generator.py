@@ -10,6 +10,20 @@ import os
 
 
 def generate_pdf(output_path, config, questions):
+    # Override marks from config if provided
+    mcq_marks   = config.get('mcq_marks', None)
+    short_marks = config.get('short_marks', None)
+    long_marks  = config.get('long_marks', None)
+
+    type_marks = {}
+    if mcq_marks:   type_marks['MCQ']   = mcq_marks
+    if short_marks: type_marks['Short'] = short_marks
+    if long_marks:  type_marks['Long']  = long_marks
+
+    # Apply configured marks to all questions
+    for q in questions:
+        if q['question_type'] in type_marks:
+            q['marks'] = type_marks[q['question_type']]
     """
     Generates a formatted question paper PDF.
     config: dict with keys - college_name, subject, exam_type, total_marks, duration, date, units

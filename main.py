@@ -338,6 +338,8 @@ class MainApp:
         self.root.configure(bg=BG)
         self.build_ui()
         self.assistant.speak("Dashboard loaded. You can navigate using the sidebar or use voice commands.")
+        # Auto-start voice listening after greeting finishes
+        self.root.after(1500, self._auto_start_listening)
 
     def build_ui(self):
         sidebar = tk.Frame(self.root, bg=PRIMARY, width=210)
@@ -399,6 +401,18 @@ class MainApp:
         self.show_generate()
 
     # ── VOICE CONTROLS ───────────────────────────────────────
+    def _auto_start_listening(self):
+        """Auto-start voice listening on dashboard load."""
+        try:
+            import speech_recognition as sr  # noqa: F401
+            import pyaudio  # noqa: F401
+            self.toggle_listening()
+        except ImportError as e:
+            missing = "pyaudio" if "pyaudio" in str(e) else "SpeechRecognition"
+            print(f"[Voice] Cannot auto-start: {missing} not installed. "
+                  f"Run: pip install SpeechRecognition pyaudio")
+            self._update_voice_status(f"⚠ {missing} not installed")
+
     def toggle_listening(self):
         if not self.voice_listening:
             self.voice_listening = True
@@ -435,16 +449,20 @@ class MainApp:
     def _execute_command(self, action):
         if action == "nav_generate":
             self.assistant.speak("Opening Generate Paper.")
-            self.show_generate()
+            self.show_generate(announce=False)
+            self.assistant.speak("Configure settings then click Generate Question Paper.")
         elif action == "nav_ai":
             self.assistant.speak("Opening AI Generate.")
-            self.show_ai_generate()
+            self.show_ai_generate(announce=False)
+            self.assistant.speak("Upload your topic file, enter subject and unit, then click Generate with AI.")
         elif action == "nav_bank":
             self.assistant.speak("Opening Question Bank.")
-            self.show_question_bank()
+            self.show_question_bank(announce=False)
+            self.assistant.speak("Showing all stored questions.")
         elif action == "nav_history":
             self.assistant.speak("Opening History.")
-            self.show_history()
+            self.show_history(announce=False)
+            self.assistant.speak("Showing all previously generated question papers.")
         elif action == "action_generate":
             self.assistant.speak("Generating question paper.")
             try: self.generate_paper()
@@ -485,10 +503,11 @@ class MainApp:
         ttk.Separator(self.content, orient="horizontal").pack(fill="x", padx=20, pady=8)
 
     # ── AI GENERATE ──────────────────────────────────────────
-    def show_ai_generate(self):
+    def show_ai_generate(self, announce=True):
         self.clear_content()
         self.page_title("🤖 AI Question Generator", "Upload topic file → AI generates Bloom's Taxonomy questions")
-        self.assistant.speak("AI Generate screen. Upload your topic file, enter subject and unit, then click Generate with AI.")
+        if announce:
+            self.assistant.speak_interrupt("AI Generate screen. Upload your topic file, enter subject and unit, then click Generate with AI.")
 
         scroll = tk.Frame(self.content, bg=BG)
         scroll.pack(fill="both", expand=True, padx=20, pady=5)
@@ -659,10 +678,11 @@ class MainApp:
         threading.Thread(target=task, daemon=True).start()
 
     # ── GENERATE PAPER ───────────────────────────────────────
-    def show_generate(self):
+    def show_generate(self, announce=True):
         self.clear_content()
         self.page_title("Generate Question Paper", "Configure and auto-generate a balanced exam paper")
-        self.assistant.speak("Generate Paper screen. Configure settings then click Generate Question Paper.")
+        if announce:
+            self.assistant.speak_interrupt("Generate Paper screen. Configure settings then click Generate Question Paper.")
 
         scroll_frame = tk.Frame(self.content, bg=BG)
         scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
@@ -890,10 +910,11 @@ class MainApp:
         messagebox.showinfo("Success", f"Question paper saved!\n{save_path}")
 
     # ── QUESTION BANK ────────────────────────────────────────
-    def show_question_bank(self):
+    def show_question_bank(self, announce=True):
         self.clear_content()
         self.page_title("Question Bank", "View, edit and manage all questions")
-        self.assistant.speak("Question Bank. Showing all stored questions.")
+        if announce:
+            self.assistant.speak_interrupt("Question Bank. Showing all stored questions.")
 
         toolbar = tk.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=20, pady=5)
@@ -986,10 +1007,11 @@ class MainApp:
             self.refresh_question_table()
 
     # ── HISTORY ─────────────────────────────────────────────
-    def show_history(self):
+    def show_history(self, announce=True):
         self.clear_content()
         self.page_title("Generated Papers History")
-        self.assistant.speak("History screen. Showing all previously generated question papers.")
+        if announce:
+            self.assistant.speak_interrupt("History screen. Showing all previously generated question papers.")
         cols = ("ID", "Subject", "Exam Type", "Total Marks", "Duration", "Generated On", "Filename")
         frame = tk.Frame(self.content, bg=BG)
         frame.pack(fill="both", expand=True, padx=20, pady=10)

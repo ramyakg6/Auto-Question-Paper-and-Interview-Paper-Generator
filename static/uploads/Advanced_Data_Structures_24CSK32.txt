@@ -1,0 +1,62 @@
+ADVANCED DATA STRUCTURES
+
+Course Code: 24CSK32
+L:T:P:S: 3:0:0:0
+Hrs/Week: 3
+Credits: 03
+CIE Marks: 50
+SEE Marks: 50
+Total Marks: 100
+Exam Hours: 03
+
+COURSE OUTCOMES
+24CSK32.1 Understand the fundamentals of data structures and their applications essential for Programming/Problem Solving.
+24CSK32.2 Examine the operational aspects of linear data structures: stacks, queues.
+24CSK32.3 Analyze the behavior and performance of linked lists to address data organization challenges.
+24CSK32.4 Demonstrate the operational aspects of Tree data structures for optimized data hierarchy and retrieval.
+24CSK32.5 Demonstrate the operational aspects of Graph data structures for modeling and traversing.
+24CSK32.6 Investigate sorting methods and hashing techniques for optimizing data access, storage, and retrieval.
+
+MODULE 1 – INTRODUCTION (24CSK32.1) – 8 Hours
+Data Structures, Classifications, Data Structure Operations, Array Operations:
+Traversing, inserting, deleting, Multidimensional Arrays, Strings, Structures,
+Self-Referential Structures, Unions, Pointers, Pointer as function arguments,
+Dynamic Memory Allocation Functions.
+Text Book:
+TB1: 2.1, 2.2, 2.3 & TB2: 1.1-1.5, 2.1-2.3
+
+MODULE 2 – STACKS AND QUEUES (24CSK32.2) – 8 Hours
+Stacks, Applications of stacks: Recursion, Factorial, Fibonacci Sequence,
+Tower of Hanoi, Evaluation of Expressions, Multiple Stacks.
+Queue representation, Primitive operations, Circular queue, Priority queue,
+Double ended queue, Applications of queues.
+Text Book:
+TB1: 3.1, 3.3, 3.4 & TB2: 4.5.1, 4.5.3, 4.5.4, 4.5.6, 5.1-5.4, 6.1-6.4, 3.6.4.4
+
+MODULE 3 – LINKED LISTS (24CSK32.3) – 8 Hours
+Introduction to Linked List, Representation of linked list in memory,
+Single Linked List, Doubly linked list, Header linked list,
+Linked representation of stack, Linked representation of queue,
+Circular linked list, Operations on linked lists,
+Applications of Linked List – Polynomial Representation, Addition of two polynomials.
+Text Book:
+TB1: 4.1, 4.2, 4.4, 4.5, 4.8
+
+MODULE 4 – TREES (24CSK32.4) – 8 Hours
+Introduction, Binary Trees, Binary Tree Traversals, Threaded Binary Trees,
+Heaps, Binary Search Trees, Selection Trees, Forests, Balanced Trees,
+AVL Trees, Single rotation, Double rotation, Red-Black Trees,
+Applications of Trees – Evaluation of Expression.
+Text Book:
+TB1: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6
+TB2: 10.1, 10.3, 10.5, 10.7
+
+MODULE 5 – GRAPHS, SORTING & HASHING (24CSK32.5, 24CSK32.6) – 8 Hours
+Definitions, Terminologies, Matrix and Adjacency List Representation of Graphs,
+Elementary Graph operations, Traversal methods:
+Breadth First Search and Depth First Search.
+Sorting: Quick Sort, Merge Sort, Stable vs Unstable sort.
+Hashing: The symbol table, Hashing Functions, Collision Resolution Techniques.
+Text Book:
+TB1: 6.1, 6.2, 7.1, 8.1, 8.2
+TB2: 10.1, 10.2

@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% block title %}Generate Paper{% endblock %}
+{% block page_title %}Generate Question Paper{% endblock %}
+{% block page_sub %}Configure and generate a balanced exam paper{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.marks-row{display:grid;grid-template-columns:1fr 80px 100px;gap:10px;align-items:end;margin-bottom:12px;}
+.marks-row .form-label{margin-bottom:0;}
+.diff-row{display:flex;gap:16px;align-items:center;}
+.diff-row .form-group{flex:1;margin-bottom:0;}
+.unit-checks{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+.unit-check{
+  display:flex;align-items:center;gap:6px;
+  background:#f4f1eb;border:1px solid var(--border);
+  border-radius:6px;padding:7px 13px;cursor:pointer;
+  font-size:13px;transition:all 0.15s;
+}
+.unit-check input{display:none;}
+.unit-check.selected{background:var(--navy);color:#fff;border-color:var(--navy);}
+.preview-section{margin-top:24px;}
+.preview-q{
+  background:#faf8f4;border:1px solid var(--border);
+  border-radius:8px;padding:14px 16px;margin-bottom:10px;
+}
+.preview-q-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.preview-q-text{font-size:14px;color:var(--text);line-height:1.5;flex:1;}
+.preview-q-marks{
+  background:var(--navy);color:#fff;
+  padding:3px 10px;border-radius:5px;font-size:12px;font-weight:600;flex-shrink:0;
+}
+.preview-opts{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.preview-opt{font-size:12px;color:var(--muted);padding:2px 0;}
+.calc-total{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(200,151,58,0.1);border:1px solid var(--accent);
+  color:var(--accent);padding:8px 16px;border-radius:6px;
+  font-weight:600;font-size:14px;margin-top:4px;
+}
+.section-header{
+  background:var(--navy);color:#fff;
+  padding:8px 14px;border-radius:6px;margin:16px 0 10px;
+  font-size:13px;font-weight:600;letter-spacing:0.5px;
+}
+/* ── Question bank stats ── */
+.stats-panel{margin-top:4px;}
+.stats-overall{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;
+}
+.stat-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 13px;border-radius:20px;font-size:12.5px;font-weight:600;
+}
+.stat-pill.mcq {background:#e8f4fd;color:#1a6fa8;}
+.stat-pill.short{background:#e8f8ee;color:#1a7a3c;}
+.stat-pill.long {background:#fdf0e8;color:#a85a1a;}
+.stat-pill.total{background:#f4f1eb;color:var(--navy);}
+.unit-stat-grid{
+  display:grid;gap:8px;
+}
+.unit-stat-row{
+  background:#faf8f4;border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px;
+}
+.unit-stat-name{
+  font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:6px;
+}
+.unit-stat-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.usb{
+  font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500;
+}
+.usb.mcq {background:#e8f4fd;color:#1a6fa8;}
+.usb.short{background:#e8f8ee;color:#1a7a3c;}
+.usb.long {background:#fdf0e8;color:#a85a1a;}
+.usb.zero{background:#f0f0f0;color:#aaa;}
+.diff-tiny{font-size:10px;color:var(--muted);margin-top:3px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="align-items:start;">
+  <!-- Left: Config -->
+  <div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-sliders" style="color:var(--accent);margin-right:8px;"></i>Paper Configuration</div>
+
+      <div class="form-group">
+        <label class="form-label">College Name</label>
+        <input type="text" id="college_name" class="form-control" value="New Horizon College of Engineering"/>
+      </div>
+
+      <div class="config-grid">
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <select id="subject" class="form-control" onchange="loadUnits()">
+            <option value="">Select subject...</option>
+            {% for s in subjects %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exam Type</label>
+          <select id="exam_type" class="form-control">
+            <option>Mid Semester</option>
+            <option>End Semester</option>
+            <option>Unit Test</option>
+            <option>Internal Assessment</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Marks</label>
+          <input type="number" id="total_marks" class="form-control" value="50" min="10" max="200"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (minutes)</label>
+          <input type="number" id="duration" class="form-control" value="90" min="30" max="300"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question Bank Stats — shown after subject selected -->
+    <div class="card" id="stats_card" style="display:none;">
+      <div class="card-title" style="margin-bottom:10px;">
+        <i class="fa-solid fa-database" style="color:var(--accent);margin-right:8px;"></i>Question Bank Availability
+        <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;">for selected subject</span>
+      </div>
+      <div class="stats-panel" id="stats_panel">
+        <div style="color:var(--muted);font-size:13px;">Loading stats...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-list-check" style="color:var(--accent);margin-right:8px;"></i>Question Counts & Marks</div>
+
+      <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 12px;align-items:center;margin-bottom:8px;">
+        <span></span>
+        <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;">Count</span>
+        <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;">Marks Each</span>
+
+        <label style="font-size:13px;font-weight:500;">MCQ</label>
+        <input type="number" id="mcq_count" class="form-control" min="0" max="50" oninput="calcTotal()"/>
+        <input type="number" id="mcq_marks" class="form-control" min="1" max="10" oninput="calcTotal()"/>
+
+        <label style="font-size:13px;font-weight:500;">Short Answer</label>
+        <input type="number" id="short_count" class="form-control" min="0" max="30" oninput="calcTotal()"/>
+        <input type="number" id="short_marks" class="form-control" min="1" max="20" oninput="calcTotal()"/>
+
+        <label style="font-size:13px;font-weight:500;">Long Answer</label>
+        <input type="number" id="long_count" class="form-control" min="0" max="10" oninput="calcTotal()"/>
+        <input type="number" id="long_marks" class="form-control" min="1" max="30" oninput="calcTotal()"/>
+      </div>
+      <div class="calc-total" id="calc_total">📊 Calculated: 50 marks</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-chart-bar" style="color:var(--accent);margin-right:8px;"></i>Difficulty Ratio</div>
+      <div class="diff-row">
+        <div class="form-group">
+          <label class="form-label">Easy %</label>
+          <input type="number" id="easy_pct" class="form-control" value="40" min="0" max="100"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Medium %</label>
+          <input type="number" id="med_pct" class="form-control" value="40" min="0" max="100"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hard %</label>
+          <input type="number" id="hard_pct" class="form-control" value="20" min="0" max="100"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-book-open" style="color:var(--accent);margin-right:8px;"></i>Select Units</div>
+      <div class="unit-checks" id="units_container">
+        <span class="text-muted" style="font-size:13px;">Select a subject first</span>
+      </div>
+    </div>
+
+    <button class="btn btn-gold" style="width:100%;justify-content:center;padding:14px;font-size:15px;" onclick="selectQuestions()">
+      <i class="fa-solid fa-eye"></i> Preview Questions
+    </button>
+  </div>
+
+  <!-- Right: Preview -->
+  <div id="preview_panel">
+    <div class="card" style="min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:16px;">📋</div>
+      <div style="font-size:16px;font-weight:500;margin-bottom:8px;color:var(--navy);">Question Preview</div>
+      <div style="font-size:13px;">Configure your paper and click Preview to see selected questions here.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Spinner overlay -->
+<div id="loading_overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;padding:32px 40px;border-radius:12px;text-align:center;">
+    <div class="spinner" style="width:36px;height:36px;border-color:rgba(15,30,53,0.2);border-top-color:var(--navy);margin:0 auto 16px;"></div>
+    <div id="loading_text" style="font-size:15px;font-weight:500;color:var(--navy);">Selecting questions...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedQuestions = [];
+let paperConfig = {};
+
+function calcTotal(){
+  const t = (parseInt(document.getElementById('mcq_count').value)||0)*(parseInt(document.getElementById('mcq_marks').value)||0)
+           +(parseInt(document.getElementById('short_count').value)||0)*(parseInt(document.getElementById('short_marks').value)||0)
+           +(parseInt(document.getElementById('long_count').value)||0)*(parseInt(document.getElementById('long_marks').value)||0);
+  document.getElementById('calc_total').textContent = `📊 Calculated: ${t} marks`;
+}
+
+async function loadUnits(){
+  const subject = document.getElementById('subject').value;
+  if(!subject){
+    document.getElementById('units_container').innerHTML='<span class="text-muted" style="font-size:13px;">Select a subject first</span>';
+    document.getElementById('stats_card').style.display='none';
+    return;
+  }
+  const res = await fetch(`/api/units/${encodeURIComponent(subject)}`);
+  const units = await res.json();
+  const c = document.getElementById('units_container');
+  c.innerHTML = units.map(u=>`<label class="unit-check selected" onclick="toggleUnit(this)"><input type="checkbox" checked value="${u}"/>${u}</label>`).join('');
+
+  // Fetch and render question bank stats
+  loadStats(subject);
+}
+
+async function loadStats(subject){
+  document.getElementById('stats_card').style.display='block';
+  document.getElementById('stats_panel').innerHTML='<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+
+  const res  = await fetch(`/api/question_stats/${encodeURIComponent(subject)}`);
+  const data = await res.json();
+  const {units, overall} = data;
+
+  const typeLabel = {MCQ:'MCQ', Short:'Short Ans', Long:'Long Ans'};
+  const cls       = {MCQ:'mcq', Short:'short', Long:'long'};
+
+  // Overall pills
+  let html = `<div class="stats-overall">
+    <span class="stat-pill mcq">  <i class="fa-solid fa-circle-question" style="font-size:10px;"></i>&nbsp;MCQ: ${overall.MCQ}</span>
+    <span class="stat-pill short"><i class="fa-solid fa-align-left"       style="font-size:10px;"></i>&nbsp;Short: ${overall.Short}</span>
+    <span class="stat-pill long"> <i class="fa-solid fa-file-lines"       style="font-size:10px;"></i>&nbsp;Long: ${overall.Long}</span>
+    <span class="stat-pill total"><i class="fa-solid fa-layer-group"      style="font-size:10px;"></i>&nbsp;Total: ${overall.total}</span>
+  </div>`;
+
+  // Per-unit breakdown
+  html += `<div class="unit-stat-grid">`;
+  for(const [unit, utypes] of Object.entries(units)){
+    const totals = utypes._totals || {};
+    html += `<div class="unit-stat-row">
+      <div class="unit-stat-name">📘 ${unit}</div>
+      <div class="unit-stat-badges">`;
+    for(const t of ['MCQ','Short','Long']){
+      const n = totals[t] || 0;
+      const diffs = utypes[t] || {};
+      const diffStr = Object.entries(diffs)
+        .map(([d,c])=>`${d[0]}:${c}`)  // e.g. E:4 M:3 H:2
+        .join(' · ');
+      html += `<span class="usb ${n>0?cls[t]:'zero'}" title="${diffStr||'none'}">
+        ${typeLabel[t]}: ${n}${n>0&&diffStr?` <span style="opacity:.6;font-size:9px;">(${diffStr})</span>`:''}
+      </span>`;
+    }
+    html += `</div></div>`;
+  }
+  html += `</div>`;
+
+  if(!Object.keys(units).length){
+    html = `<div style="color:var(--muted);font-size:13px;">No questions found for this subject. Use AI Generate to add questions first.</div>`;
+  }
+
+  document.getElementById('stats_panel').innerHTML = html;
+}
+
+function toggleUnit(el){
+  el.classList.toggle('selected');
+  el.querySelector('input').checked = el.classList.contains('selected');
+}
+
+async function selectQuestions(){
+  const subject = document.getElementById('subject').value;
+  if(!subject){alert('Please select a subject.');return;}
+  const units = Array.from(document.querySelectorAll('.unit-check.selected input')).map(i=>i.value);
+  if(!units.length){alert('Please select at least one unit.');return;}
+
+  showLoading('Selecting questions...');
+  const payload = {
+    subject, units,
+    mcq_count:parseInt(document.getElementById('mcq_count').value)||0,
+    short_count:parseInt(document.getElementById('short_count').value)||0,
+    long_count:parseInt(document.getElementById('long_count').value)||0,
+    mcq_marks:parseInt(document.getElementById('mcq_marks').value)||1,
+    short_marks:parseInt(document.getElementById('short_marks').value)||4,
+    long_marks:parseInt(document.getElementById('long_marks').value)||10,
+    easy_pct:parseInt(document.getElementById('easy_pct').value)||40,
+    med_pct:parseInt(document.getElementById('med_pct').value)||40,
+    hard_pct:parseInt(document.getElementById('hard_pct').value)||20,
+  };
+  const res = await fetch('/api/select_questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data = await res.json();
+  hideLoading();
+
+  if(data.error){alert(data.error);return;}
+
+  // ── Marks / question-count mismatch detection ──────────────
+  const configuredMarks = parseInt(document.getElementById('total_marks').value)||0;
+  const calculatedMarks = data.total_marks;
+
+  if(data.selected_count < data.expected_count){
+    // DB doesn't have enough questions — hard error, don't proceed silently
+    const missing = data.expected_count - data.selected_count;
+    showToast(
+      `⚠️ Only ${data.selected_count} of ${data.expected_count} questions found in the question bank `+
+      `(${missing} missing). Calculated marks: ${calculatedMarks}. `+
+      `Please add more questions via AI Generate or adjust counts/units.`,
+      'error', 8000
+    );
+    // Still render what we have so user can see the gap
+  } else if(calculatedMarks !== configuredMarks){
+    const diff = Math.abs(calculatedMarks - configuredMarks);
+    showToast(
+      `ℹ️ Marks note: Calculated total is ${calculatedMarks} marks `+
+      `(${diff} mark${diff!==1?'s':''} ${calculatedMarks<configuredMarks?'short of':'over'} your `+
+      `configured ${configuredMarks}). This is due to difficulty ratio rounding.`,
+      'warning', 6000
+    );
+  }
+
+  selectedQuestions = data.questions;
+  paperConfig = {
+    college_name: document.getElementById('college_name').value,
+    subject, units,
+    exam_type: document.getElementById('exam_type').value,
+    total_marks: calculatedMarks,   // use actual marks, not configured
+    duration: parseInt(document.getElementById('duration').value),
+    date: new Date().toLocaleDateString('en-GB'),
+  };
+  renderPreview(data.questions, calculatedMarks);
+}
+
+function renderPreview(qs, totalMarks){
+  const mcq=qs.filter(q=>q.question_type==='MCQ');
+  const short=qs.filter(q=>q.question_type==='Short');
+  const lng=qs.filter(q=>q.question_type==='Long');
+
+  let html=`<div class="card">
+    <div class="flex-between" style="margin-bottom:16px;">
+      <div class="card-title" style="margin-bottom:0;padding-bottom:0;border:none;">📋 Paper Preview</div>
+      <div style="font-size:13px;color:var(--muted);">${qs.length} questions · ${totalMarks} marks</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <span class="badge badge-mcq">MCQ: ${mcq.length}</span>
+      <span class="badge badge-short">Short: ${short.length}</span>
+      <span class="badge badge-long">Long: ${lng.length}</span>
+      <span class="badge" style="background:#f4f1eb;color:var(--navy);">Total: ${totalMarks} marks</span>
+    </div>`;
+
+  if(qs.length===0){
+    html+=`<p class="text-muted">No questions found. Try AI Generate first to populate the question bank.</p>`;
+  } else {
+    [['SECTION A — MCQ',mcq],['SECTION B — Short Answer',short],['SECTION C — Long Answer',lng]].forEach(([title,section])=>{
+      if(!section.length) return;
+      html+=`<div class="section-header">${title}</div>`;
+      section.forEach((q,i)=>{
+        html+=`<div class="preview-q">
+          <div class="preview-q-header">
+            <div class="preview-q-text"><b>Q${i+1}.</b> ${q.question_text}</div>
+            <div class="preview-q-marks">${q.marks}M</div>
+          </div>`;
+        if(q.question_type==='MCQ'){
+          html+=`<div class="preview-opts">`;
+          ['option_a','option_b','option_c','option_d'].forEach((k,idx)=>{
+            if(q[k]) html+=`<div class="preview-opt">(${['A','B','C','D'][idx]}) ${q[k]}</div>`;
+          });
+          html+=`</div>`;
+        }
+        html+=`</div>`;
+      });
+    });
+    html+=`<div class="divider"></div>
+      <div class="flex gap-2" style="justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="selectQuestions()"><i class="fa-solid fa-rotate"></i> Regenerate</button>
+        <button class="btn btn-gold" onclick="generatePDF()"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+      </div>`;
+  }
+  html+=`</div>`;
+  document.getElementById('preview_panel').innerHTML=html;
+}
+
+async function generatePDF(){
+  if(!selectedQuestions.length){alert('No questions selected.');return;}
+  showLoading('Generating PDF...');
+  const res = await fetch('/api/generate_pdf',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({config:paperConfig,questions:selectedQuestions})
+  });
+  const data = await res.json();
+  hideLoading();
+  if(data.success){
+    const a=document.createElement('a');
+    a.href=data.url;a.download=data.filename;a.click();
+    // Show success msg
+    const panel = document.getElementById('preview_panel');
+    const msg = document.createElement('div');
+    msg.className='alert alert-success';msg.style.marginTop='12px';
+    msg.innerHTML=`<i class="fa-solid fa-check-circle"></i> PDF generated successfully! <a href="${data.url}" target="_blank" style="font-weight:600;">Open PDF</a>`;
+    panel.prepend(msg);
+    setTimeout(()=>msg.remove(),5000);
+  }
+}
+
+function showLoading(text){
+  document.getElementById('loading_text').textContent=text;
+  document.getElementById('loading_overlay').classList.remove('hidden');
+  document.getElementById('loading_overlay').style.display='flex';
+}
+function hideLoading(){
+  document.getElementById('loading_overlay').classList.add('hidden');
+  document.getElementById('loading_overlay').style.display='none';
+}
+function showToast(msg, type='warning', duration=5000){
+  let toast = document.getElementById('marks_toast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'marks_toast';
+    toast.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      max-width:560px;width:90%;padding:14px 18px;border-radius:10px;
+      font-size:13.5px;line-height:1.5;z-index:9999;
+      box-shadow:0 4px 20px rgba(0,0,0,0.18);transition:opacity 0.4s;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.style.background = type==='error' ? '#fff0f0' : '#fffbea';
+  toast.style.border      = type==='error' ? '1px solid #f5a0a0' : '1px solid #f0d080';
+  toast.style.color       = type==='error' ? '#c0392b' : '#7d5a00';
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>{ toast.style.opacity='0'; }, duration);
+}
+calcTotal();
+
+// Set default values via JS — prevents browser from resetting them on DOM changes
+document.getElementById('mcq_count').value  = 10;
+document.getElementById('mcq_marks').value  = 1;
+document.getElementById('short_count').value = 5;
+document.getElementById('short_marks').value = 4;
+document.getElementById('long_count').value  = 2;
+document.getElementById('long_marks').value  = 10;
+calcTotal();
+</script>
+{% endblock %}

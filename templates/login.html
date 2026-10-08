@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Login — AQPG</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--navy:#0f1e35;--accent:#c8973a;--accent2:#e8b86d;--bg:#f4f1eb;--border:#e2d9c8;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--navy);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(200,151,58,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 50%);
+}
+.login-wrap{
+  display:flex;width:900px;min-height:520px;
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,0.4);
+}
+/* Left panel */
+.login-left{
+  flex:1;background:linear-gradient(145deg,#162844,#0a1628);
+  padding:56px 48px;display:flex;flex-direction:column;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.login-left::before{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,151,58,0.12),transparent 70%);
+}
+.login-left::after{
+  content:'';position:absolute;bottom:-60px;left:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,151,58,0.06),transparent 70%);
+}
+.login-icon{font-size:52px;margin-bottom:20px;}
+.login-heading{
+  font-family:'EB Garamond',serif;
+  font-size:34px;font-weight:700;color:#fff;
+  line-height:1.2;margin-bottom:12px;
+}
+.login-heading span{color:var(--accent2);}
+.login-desc{
+  font-size:14px;color:rgba(255,255,255,0.5);
+  line-height:1.7;max-width:280px;
+}
+.login-features{margin-top:32px;}
+.login-feature{
+  display:flex;align-items:center;gap:10px;
+  color:rgba(255,255,255,0.55);font-size:13px;
+  margin-bottom:10px;
+}
+.login-feature::before{
+  content:'✓';color:var(--accent2);
+  font-weight:700;font-size:14px;flex-shrink:0;
+}
+/* Right panel */
+.login-right{
+  width:380px;background:#fff;
+  padding:56px 40px;display:flex;flex-direction:column;justify-content:center;
+}
+.form-title{
+  font-family:'EB Garamond',serif;
+  font-size:26px;font-weight:700;color:var(--navy);
+  margin-bottom:6px;
+}
+.form-subtitle{font-size:13px;color:#6b7280;margin-bottom:32px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.6px;}
+.form-control{
+  width:100%;padding:11px 14px;
+  border:1.5px solid #e5e7eb;border-radius:7px;
+  font-family:'DM Sans',sans-serif;font-size:14px;color:#111;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+  background:#fafafa;
+}
+.form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,151,58,0.1);background:#fff;}
+.btn-login{
+  width:100%;padding:12px;border:none;border-radius:7px;
+  background:var(--navy);color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;margin-top:8px;
+}
+.btn-login:hover{background:#162844;box-shadow:0 6px 20px rgba(15,30,53,0.3);}
+.login-hint{
+  margin-top:20px;padding:12px 14px;
+  background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;
+  font-size:12px;color:#6b7280;line-height:1.6;
+}
+.login-hint strong{color:#374151;}
+.alert-error{
+  background:#fee2e2;border:1px solid #fca5a5;
+  color:#991b1b;padding:11px 14px;border-radius:7px;
+  font-size:13px;margin-bottom:16px;
+}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-left">
+    <div class="login-icon">📄</div>
+    <div class="login-heading">Auto Question<br>Paper <span>Generator</span></div>
+    <div class="login-desc">AI-powered examination paper generation with Bloom's Taxonomy alignment.</div>
+    <div class="login-features">
+      <div class="login-feature">Generate questions from uploaded content</div>
+      <div class="login-feature">Bloom's Taxonomy — all 6 cognitive levels</div>
+      <div class="login-feature">Configurable difficulty distribution</div>
+      <div class="login-feature">Export professional PDF question papers</div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="form-title">Welcome back</div>
+    <div class="form-subtitle">Sign in to your account to continue</div>
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter username" autocomplete="username" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Enter password" autocomplete="current-password" required/>
+      </div>
+      <button type="submit" class="btn-login">Sign In →</button>
+    </form>
+    <div class="login-hint">
+      <strong>Default credentials</strong><br>
+      Admin: admin / admin123<br>
+      Faculty: faculty / faculty123
+    </div>
+  </div>
+</div>
+</body>
+</html>

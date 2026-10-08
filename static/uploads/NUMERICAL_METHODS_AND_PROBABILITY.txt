@@ -1,0 +1,142 @@
+NUMERICAL METHODS AND PROBABILITY
+Course Code: 24CSK42 
+Subject: Mathematics - Common to AIML, CSE and CDS
+
+MODULE-1: INTRODUCTION TO JAVA (8 Hours)
+-The Java Language, Java Development Kit (JDK)
+-Java Buzzwords, Byte Code, JVM, JRE and Java environment 
+-Data types, variables and Arrays
+-Operators, Control statement
+-command line Arguments
+-Object Oriented concepts, Classes, Objects and Methods, Access specifiers, Method Overloading, Constructor, Implicit this. 
+
+MODULE-2: INHERITANCE AND INTERFACING (8 Hours)
+-Inheritance, Method Overriding
+-Annotations
+-Static members, Inner Classes
+-Abstract Classes, Final members and classes
+-The Object Class
+-Interfaces, Package Fundamentals
+-Reflections 
+
+MODULE-3: VECTOR SPACES (8 Hours)
+- Vector Space definition and examples
+- Subspaces and Spanning sets
+- Linear Dependence and Independence
+- Linear Independence and Spanning Sets
+- Bases: Orthogonal and Orthonormal bases and Dimension
+
+MODULE-4: PROBABILITY AND PROBABILITY DISTRIBUTIONS (8 Hours)
+- Random variables (discrete and continuous)
+- Probability density functions
+- Expectation and Standard Deviation
+- Discrete Probability distributions: Binomial and Poisson Distributions
+- Problems on Probability distributions
+- Continuous Probability distribution: Normal Distributions
+- Concept of joint probability
+- Joint probability distribution
+- Dependent and Independent random variables
+- Covariance and Correlation coefficient
+
+MODULE-5: SAMPLING THEORY (8 Hours)
+- Sampling and Sampling distributions
+- Test of hypothesis of large samples for means and proportions
+- Inferences for variance and proportion
+- Central limit theorem (without proof)
+- Confidence limits for means
+- Student's t-distribution
+- F-distribution
+- Chi-square distribution for test of goodness of fit for small samples
+
+Bloom's Taxonomy Mapping:
+L1 - Remember: Recall definitions, formulae, and basic concepts
+L2 - Understand: Explain methods and interpret results
+L3 - Apply: Solve numerical problems using methods
+L4 - Analyze: Compare methods, analyze solutions
+L5 - Evaluate: Justify choice of method, assess accuracy
+L6 - Create: Design solutions, formulate new problems
+
+Assessment Pattern:
+- Theory Tests: 25 Marks
+- AAT1: 15 Marks
+- AAT2: 10 Marks
+- SEE Marks: 50 Marks
+- Total Marks: 100
+Course Code: 24MAC31
+Subject: Mathematics - Common to AIML, CSE and CDS
+
+MODULE-1: NUMERICAL SOLUTIONS AND INTERPOLATION (8 Hours)
+Numerical solution of algebraic and transcendental equations:
+- Newton-Raphson Method
+- Problems on interpolation
+- Newton's forward and backward formulae for equal intervals
+- Newton divided difference
+- Lagrange's formula for unequal intervals (without proofs)
+- Problems on interpolation
+
+Key Topics:
+- Use Newton's forward formula for equal interval problems
+- Use Newton's backward formula for equal interval problems
+- Uses of Simpson's 1/3rd rule problems
+- Uses of Simpson's 3/8th rule problems
+- Use Wronskian to test a set of solutions of a linear homogeneous differential equation for linear independence
+
+MODULE-2: NUMERICAL SOLUTIONS TO DIFFERENTIAL EQUATIONS AND INTEGRATION (8 Hours)
+Numerical solution of ordinary differential equations of first order and first degree:
+- Taylor's series method
+- Modified Euler's method
+- Runge-Kutta method of fourth-order problems
+- Milne's predictor and corrector methods
+- Numerical integration: Simpson's 1/3rd rule, Simpson's 3/8th rule, Weddle's rule (without proofs)
+- Application of numerical integration to velocity of a particle and volume of solids
+
+Key Topics:
+- Identify and sketch the graph of a conic section and perform a rotation of axes
+- Use of Binomial Distribution in real life problems
+- Use of Normal Distribution in real life problems
+- Use Student's t-distribution to test goodness of fit for small samples
+- Use Chi-square distribution to test goodness of fit for small samples
+
+MODULE-3: VECTOR SPACES (8 Hours)
+- Vector Space definition and examples
+- Subspaces and Spanning sets
+- Linear Dependence and Independence
+- Linear Independence and Spanning Sets
+- Bases: Orthogonal and Orthonormal bases and Dimension
+
+MODULE-4: PROBABILITY AND PROBABILITY DISTRIBUTIONS (8 Hours)
+- Random variables (discrete and continuous)
+- Probability density functions
+- Expectation and Standard Deviation
+- Discrete Probability distributions: Binomial and Poisson Distributions
+- Problems on Probability distributions
+- Continuous Probability distribution: Normal Distributions
+- Concept of joint probability
+- Joint probability distribution
+- Dependent and Independent random variables
+- Covariance and Correlation coefficient
+
+MODULE-5: SAMPLING THEORY (8 Hours)
+- Sampling and Sampling distributions
+- Test of hypothesis of large samples for means and proportions
+- Inferences for variance and proportion
+- Central limit theorem (without proof)
+- Confidence limits for means
+- Student's t-distribution
+- F-distribution
+- Chi-square distribution for test of goodness of fit for small samples
+
+Bloom's Taxonomy Mapping:
+L1 - Remember: Recall definitions, formulae, and basic concepts
+L2 - Understand: Explain methods and interpret results
+L3 - Apply: Solve numerical problems using methods
+L4 - Analyze: Compare methods, analyze solutions
+L5 - Evaluate: Justify choice of method, assess accuracy
+L6 - Create: Design solutions, formulate new problems
+
+Assessment Pattern:
+- Theory Tests: 25 Marks
+- AAT1: 15 Marks
+- AAT2: 10 Marks
+- SEE Marks: 50 Marks
+- Total Marks: 100

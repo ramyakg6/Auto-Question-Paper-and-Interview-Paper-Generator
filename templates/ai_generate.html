@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}AI Generate{% endblock %}
+{% block page_title %}AI Question Generator{% endblock %}
+{% block page_sub %}Upload topic file → LLaMA generates Bloom's Taxonomy questions{% endblock %}
+
+{% block extra_css %}
+<style>
+.bloom-selector{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.bloom-btn{
+  padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;background:#fff;color:var(--text);
+  user-select:none;
+}
+.bloom-btn.active-remember{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}
+.bloom-btn.active-understand{background:#ffedd5;border-color:#fdba74;color:#9a3412;}
+.bloom-btn.active-apply{background:#fef9c3;border-color:#fde047;color:#854d0e;}
+.bloom-btn.active-analyze{background:#dcfce7;border-color:#86efac;color:#166534;}
+.bloom-btn.active-evaluate{background:#dbeafe;border-color:#93c5fd;color:#1e40af;}
+.bloom-btn.active-create{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6;}
+.upload-zone{
+  border:2px dashed var(--border);border-radius:10px;
+  padding:32px;text-align:center;cursor:pointer;
+  transition:all 0.2s;background:#faf8f4;
+  position:relative;
+}
+.upload-zone:hover{border-color:var(--accent);background:rgba(200,151,58,0.04);}
+.upload-zone.has-file{border-color:var(--success);background:#f0fdf4;}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.result-card{
+  border-left:4px solid var(--accent);
+  background:#faf8f4;padding:14px 16px;
+  border-radius:0 8px 8px 0;margin-bottom:10px;
+}
+.counts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.progress-bar{
+  height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin-top:8px;
+}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="align-items:start;">
+  <!-- Left: Config -->
+  <div>
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-key" style="color:var(--accent);margin-right:8px;"></i>Groq API Key</div>
+      <div class="form-group" style="margin-bottom:4px;">
+        <input type="password" id="api_key" class="form-control" placeholder="gsk_..."/>
+      </div>
+      <div class="text-muted" style="font-size:12px;">Get your free API key at <a href="https://console.groq.com" target="_blank">console.groq.com</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-file-arrow-up" style="color:var(--accent);margin-right:8px;"></i>Upload Topic File</div>
+      <div class="upload-zone" id="upload_zone">
+        <input type="file" id="topic_file" accept=".pdf,.txt,.docx" onchange="fileSelected(this)"/>
+        <div style="font-size:32px;margin-bottom:10px;">📁</div>
+        <div style="font-size:14px;font-weight:500;color:var(--navy);" id="upload_text">Drop your file here or click to browse</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Supports PDF, TXT, DOCX</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-book" style="color:var(--accent);margin-right:8px;"></i>Subject & Unit</div>
+      <div class="config-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <input type="text" id="ai_subject" class="form-control" placeholder="e.g. Python, DBMS"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit / Topic</label>
+          <input type="text" id="ai_unit" class="form-control" placeholder="e.g. Unit 1 — OOP"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-brain" style="color:var(--accent);margin-right:8px;"></i>Bloom's Taxonomy Levels</div>
+      <div class="bloom-selector">
+        {% for level, cls in [('Remember','remember'),('Understand','understand'),('Apply','apply'),('Analyze','analyze'),('Evaluate','evaluate'),('Create','create')] %}
+        <div class="bloom-btn active-{{ cls }}" onclick="toggleBloom(this,'{{ level }}')" data-level="{{ level }}">{{ level }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-hashtag" style="color:var(--accent);margin-right:8px;"></i>Questions per Level</div>
+      <div class="counts-grid">
+        <div class="form-group">
+          <label class="form-label">MCQ (Remember)</label>
+          <input type="number" id="mcq_per" class="form-control" value="5" min="1" max="20"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Short Answer</label>
+          <input type="number" id="short_per" class="form-control" value="2" min="1" max="10"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Long Answer</label>
+          <input type="number" id="long_per" class="form-control" value="1" min="1" max="5"/>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-gold" id="gen_btn" style="width:100%;justify-content:center;padding:14px;font-size:15px;" onclick="runAIGeneration()">
+      <i class="fa-solid fa-robot"></i> Generate with AI
+    </button>
+    <div id="gen_status" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Right: Results -->
+  <div id="results_panel">
+    <div class="card" style="min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:16px;">🤖</div>
+      <div style="font-size:16px;font-weight:500;margin-bottom:8px;color:var(--navy);">AI Ready</div>
+      <div style="font-size:13px;line-height:1.6;">Upload a topic file, configure the settings,<br>and click Generate to create questions<br>using LLaMA 3.3-70B.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const activeBloom = new Set(['Remember','Understand','Apply','Analyze','Evaluate','Create']);
+
+function toggleBloom(el, level){
+  if(activeBloom.has(level)){
+    activeBloom.delete(level);
+    el.style.opacity='0.35';
+  } else {
+    activeBloom.add(level);
+    el.style.opacity='1';
+  }
+}
+
+function fileSelected(input){
+  if(input.files.length){
+    const name = input.files[0].name;
+    document.getElementById('upload_text').textContent = '✓ ' + name;
+    document.getElementById('upload_zone').classList.add('has-file');
+  }
+}
+
+function setStatus(msg, type='info'){
+  const el = document.getElementById('gen_status');
+  const classes = {info:'alert-info',error:'alert-error',success:'alert-success'};
+  el.innerHTML = `<div class="alert ${classes[type]}">${msg}</div>`;
+}
+
+async function runAIGeneration(){
+  const api_key = document.getElementById('api_key').value.trim();
+  const subject = document.getElementById('ai_subject').value.trim();
+  const unit    = document.getElementById('ai_unit').value.trim();
+  const file    = document.getElementById('topic_file').files[0];
+
+  if(!file){setStatus('<i class="fa-solid fa-triangle-exclamation"></i> Please upload a topic file.','error');return;}
+  if(!subject||!unit){setStatus('<i class="fa-solid fa-triangle-exclamation"></i> Please enter subject and unit.','error');return;}
+  if(!api_key){setStatus('<i class="fa-solid fa-triangle-exclamation"></i> Please enter your Groq API key.','error');return;}
+  if(!activeBloom.size){setStatus('<i class="fa-solid fa-triangle-exclamation"></i> Select at least one Bloom\'s level.','error');return;}
+
+  const btn = document.getElementById('gen_btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  setStatus('<i class="fa-solid fa-circle-notch fa-spin"></i> Extracting text and calling LLaMA API...','info');
+
+  // Show loading in results panel
+  document.getElementById('results_panel').innerHTML = `<div class="card" style="min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <span class="spinner" style="width:40px;height:40px;border-color:rgba(15,30,53,0.15);border-top-color:var(--navy);"></span>
+    <div style="font-size:14px;color:var(--muted);">LLaMA 3.3-70B is generating questions...</div>
+    <div class="progress-bar" style="width:200px;"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  </div>`;
+
+  // Animate progress
+  let prog = 0;
+  const progInt = setInterval(()=>{
+    prog = Math.min(prog + Math.random()*8, 85);
+    const el = document.getElementById('prog');
+    if(el) el.style.width = prog + '%';
+  }, 400);
+
+  const fd = new FormData();
+  fd.append('api_key', api_key);
+  fd.append('subject', subject);
+  fd.append('unit', unit);
+  fd.append('mcq_per', document.getElementById('mcq_per').value);
+  fd.append('short_per', document.getElementById('short_per').value);
+  fd.append('long_per', document.getElementById('long_per').value);
+  activeBloom.forEach(l => fd.append('levels', l));
+  fd.append('topic_file', file);
+
+  try{
+    const res = await fetch('/api/ai_generate',{method:'POST',body:fd});
+    const data = await res.json();
+    clearInterval(progInt);
+
+    if(data.error){
+      setStatus(`<i class="fa-solid fa-circle-xmark"></i> ${data.error}`,'error');
+      renderResultsEmpty();
+    } else {
+      setStatus(`<i class="fa-solid fa-check-circle"></i> ${data.saved} questions generated and saved to Question Bank!`,'success');
+      renderResults(data.questions, data.saved);
+    }
+  } catch(e){
+    clearInterval(progInt);
+    setStatus(`<i class="fa-solid fa-circle-xmark"></i> Error: ${e.message}`,'error');
+    renderResultsEmpty();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-robot"></i> Generate with AI';
+}
+
+function renderResultsEmpty(){
+  document.getElementById('results_panel').innerHTML=`<div class="card" style="min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;">
+    <div><div style="font-size:36px;margin-bottom:10px;">❌</div><div style="color:var(--muted)">Generation failed. Check the error message.</div></div></div>`;
+}
+
+const bloomColors = {
+  Remember:'bloom-remember',Understand:'bloom-understand',Apply:'bloom-apply',
+  Analyze:'bloom-analyze',Evaluate:'bloom-evaluate',Create:'bloom-create'
+};
+
+function renderResults(qs, saved){
+  if(!qs||!qs.length){renderResultsEmpty();return;}
+  let html=`<div class="card">
+    <div class="flex-between" style="margin-bottom:16px;">
+      <div class="card-title" style="margin:0;padding:0;border:none;">✅ ${saved} Questions Generated</div>
+      <a href="/question_bank" class="btn btn-sm btn-outline"><i class="fa-solid fa-database"></i> View Bank</a>
+    </div>`;
+  qs.forEach((q,i)=>{
+    const bc = bloomColors[q.blooms_level]||'';
+    html+=`<div class="result-card">
+      <div class="flex-between" style="margin-bottom:6px;">
+        <span class="badge ${bc}">${q.blooms_level}</span>
+        <span class="badge" style="background:#f4f1eb;color:var(--navy);">${q.question_type} · ${q.marks}M</span>
+      </div>
+      <div style="font-size:14px;line-height:1.5;">${q.question_text}</div>`;
+    if(q.question_type==='MCQ'){
+      html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">`;
+      ['option_a','option_b','option_c','option_d'].forEach((k,idx)=>{
+        if(q[k]) html+=`<div style="font-size:12px;color:var(--muted);padding:2px 0;">(${['A','B','C','D'][idx]}) ${q[k]}</div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  html+=`<a href="/generate" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px;">
+    <i class="fa-solid fa-file-circle-plus"></i> Generate Paper from These Questions
+  </a></div>`;
+  document.getElementById('results_panel').innerHTML=html;
+}
+</script>
+{% endblock %}

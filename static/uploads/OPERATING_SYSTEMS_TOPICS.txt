@@ -1,0 +1,136 @@
+OPERATING SYSTEMS
+Course Code: 24CS43
+Subject: Operating Systems - Common to CSE, AIML and CDS
+
+L:T:P: 3:0:0
+CIE Marks: 50
+SEE Marks: 50
+Total Marks: 100
+Credits: 03
+Exam Hours: 03
+
+Course Outcomes:
+At the end of the course, the student will be able to:
+
+24CS43.1 - Understand the concept of processes and services offered by an operating system
+24CS43.2 - Apply Inter-Process Communication mechanisms and analyze CPU scheduling algorithms
+24CS43.3 - Examine hardware and software solutions to critical section problems and evaluate memory management techniques
+24CS43.4 - Assess various approaches to memory management
+24CS43.5 - Examine the organization of secondary storage management
+24CS43.6 - Conduct Linux Operating System case study
+
+------------------------------------------------------------
+
+MODULE-1: OPERATING SYSTEM CONCEPTS (8 Hours)
+- Definition of Operating System
+- Operating System Structure
+- Operating System Operations: Dual Mode, Services, System Calls
+- Types of OS
+- Process Concepts: Process, PCB, Scheduling Queues, Schedulers
+- Context Switching
+
+Case Study / Self Study:
+- Challenges in designing Linux Operating System
+
+Key Topics:
+- Understand OS architecture
+- Learn system calls and services
+- Analyze process management basics
+
+------------------------------------------------------------
+
+MODULE-2: PROCESS MANAGEMENT (8 Hours)
+- Process Operations
+- Inter-Process Communication (IPC):
+  - Shared Memory
+  - Message Passing
+  - Pipes and Sockets
+- CPU Scheduling:
+  - Scheduling Criteria
+  - Algorithms: FCFS, SJF, Round Robin, Priority
+- Multithreading:
+  - Models and Threading Issues
+
+Case Study / Self Study:
+- Threading models in Linux systems
+
+Key Topics:
+- Implement IPC mechanisms
+- Compare scheduling algorithms
+- Understand multithreading concepts
+
+------------------------------------------------------------
+
+MODULE-3: PROCESS SYNCHRONIZATION AND CONCURRENCY (8 Hours)
+- Background and Critical Section Problem
+- Synchronization Hardware Solutions
+- Mutex Locks and Semaphores
+- Deadlocks:
+  - Deadlock Characterization
+  - Necessary Conditions
+  - Resource Allocation Graph
+- Classical Problems:
+  - Reader-Writer Problem
+  - Dining Philosophers Problem
+
+Case Study / Self Study:
+- Synchronization in Linux kernel data structures
+
+Key Topics:
+- Solve synchronization problems
+- Analyze deadlock conditions
+- Apply concurrency concepts
+
+------------------------------------------------------------
+
+MODULE-4: MEMORY MANAGEMENT (8 Hours)
+- Memory Management Strategies
+- Paging and Segmentation
+- Virtual Memory
+- Demand Paging
+- Page Replacement Algorithms:
+  - FIFO
+  - LRU
+  - Optimal
+
+Key Topics:
+- Understand virtual memory concepts
+- Compare page replacement techniques
+- Analyze memory allocation methods
+
+------------------------------------------------------------
+
+MODULE-5: FILE SYSTEM AND SECONDARY STORAGE (8 Hours)
+- File System Structure
+- File Access Methods
+- Directory Structure
+- Disk Scheduling Algorithms:
+  - FCFS
+  - SSTF
+  - SCAN
+  - C-SCAN
+- Secondary Storage Structure
+
+Key Topics:
+- Understand file system organization
+- Analyze disk scheduling algorithms
+- Manage secondary storage efficiently
+
+------------------------------------------------------------
+
+Bloom's Taxonomy Mapping:
+L1 - Remember: Recall OS concepts and definitions  
+L2 - Understand: Explain OS structures and working  
+L3 - Apply: Use scheduling and IPC mechanisms  
+L4 - Analyze: Compare algorithms and system performance  
+L5 - Evaluate: Assess memory and synchronization techniques  
+L6 - Create: Design OS-based solutions and case studies  
+
+------------------------------------------------------------
+
+Assessment Pattern:
+- Theory Tests: 25 Marks  
+- AAT1: 15 Marks  
+- AAT2: 10 Marks  
+- SEE Marks: 50 Marks  
+- Total Marks: 100  

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Welcome back, {{ session.user.username }}{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">📚</div>
+    <div class="stat-num">{{ total_q }}</div>
+    <div class="stat-label">Total Questions</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📄</div>
+    <div class="stat-num">{{ total_p }}</div>
+    <div class="stat-label">Papers Generated</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📖</div>
+    <div class="stat-num">{{ subjects|length }}</div>
+    <div class="stat-label">Subjects</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Quick Actions</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <a href="{{ url_for('ai_generate') }}" class="btn btn-gold" style="justify-content:center;">
+        <i class="fa-solid fa-robot"></i> Generate Questions with AI
+      </a>
+      <a href="{{ url_for('generate') }}" class="btn btn-primary" style="justify-content:center;">
+        <i class="fa-solid fa-file-circle-plus"></i> Create Question Paper
+      </a>
+      <a href="{{ url_for('question_bank') }}" class="btn btn-outline" style="justify-content:center;">
+        <i class="fa-solid fa-database"></i> Browse Question Bank
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent Papers</div>
+    {% if recent %}
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      {% for p in recent %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f9f7f3;border-radius:7px;border:1px solid var(--border);">
+        <div>
+          <div style="font-weight:500;font-size:14px;">{{ p.subject }} — {{ p.exam_type }}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">{{ p.generated_on }} · {{ p.total_marks }} marks</div>
+        </div>
+        <a href="/static/uploads/{{ p.filename }}" target="_blank" class="btn btn-sm btn-outline">
+          <i class="fa-solid fa-download"></i>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No papers generated yet. <a href="{{ url_for('generate') }}">Create one now →</a></p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">How It Works</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+    {% for step, icon, desc in [
+      ('1. Upload', '📁', 'Upload your topic file — PDF, DOCX, or TXT'),
+      ('2. AI Generate', '🤖', 'LLaMA 3.3-70B generates Bloom\'s-aligned questions'),
+      ('3. Configure', '⚙️', 'Set question counts, difficulty ratio, and exam type'),
+      ('4. Export PDF', '📄', 'Download a professionally formatted question paper'),
+    ] %}
+    <div style="text-align:center;padding:20px 12px;background:#faf8f4;border-radius:8px;border:1px solid var(--border);">
+      <div style="font-size:30px;margin-bottom:10px;">{{ icon }}</div>
+      <div style="font-weight:600;font-size:14px;color:var(--navy);margin-bottom:6px;">{{ step }}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;">{{ desc }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
